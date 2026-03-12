@@ -38,7 +38,7 @@ export default function App() {
   const [mepPct,setMepPct]=useState("12.4");
   const [bsMepPct,setBsMepPct]=useState("30");
   const [bonus,setBonus]=useState({lw:"36",sd:"0",cp:"0",tr:"0"});
-  const [tab,setTab]=useState("calc");
+  const [tab,setTab]=useState("home");
   const [winA,setWinA]=useState("");
   const [ventA,setVentA]=useState("");
   const [showZone,setShowZone]=useState(false);
@@ -234,76 +234,260 @@ export default function App() {
     );
   };
 
-  // ═══ RENDER ═══
+
+  // ═══ RENDER SETUP ═══
+  const NAV=[
+    {g:null,items:[{id:"home",icon:"⌂",lbl:"首頁"}]},
+    {g:"試算工具",items:[{id:"calc",icon:"⚖",lbl:"法規驗算"},{id:"dev",icon:"⊞",lbl:"開發量評估"},{id:"space",icon:"⊟",lbl:"面積試算"}]},
+    {g:"法規參考",items:[{id:"search",icon:"◉",lbl:"法規查詢"},{id:"ai",icon:"✦",lbl:"AI 助理"},{id:"ref",icon:"◈",lbl:"縣市細則"}]},
+    {g:"專案管理",items:[{id:"projects",icon:"◧",lbl:"專案管理"}]},
+  ];
+  const NI=({id,icon,lbl})=>(
+    <button onClick={()=>setTab(id)} style={{display:"flex",alignItems:"center",gap:9,width:"100%",padding:"7px 10px",background:tab===id?"rgba(59,130,246,0.12)":"transparent",border:"none",borderLeft:tab===id?"2px solid #3b82f6":"2px solid transparent",borderRadius:"0 8px 8px 0",cursor:"pointer",color:tab===id?"#60a5fa":C.muted,fontSize:12.5,fontWeight:tab===id?600:400,textAlign:"left",transition:"all 0.15s ease",marginLeft:-1}}>
+      <span style={{fontSize:13,opacity:tab===id?1:0.55,width:16,textAlign:"center"}}>{icon}</span><span>{lbl}</span>
+    </button>
+  );
+  const ACCENT="#3b82f6";
+  const INP2={...INP,border:"1px solid rgba(59,130,246,0.15)",background:"rgba(59,130,246,0.04)"};
+
   return (
-    <div style={{background:`linear-gradient(180deg, ${C.bg} 0%, #0a1220 100%)`,minHeight:"100vh",color:C.text}}>
+    <div style={{display:"flex",minHeight:"100vh",background:C.bg,color:C.text}}>
 
-      {/* HEADER */}
-      <div style={{background:"linear-gradient(135deg, rgba(6,11,20,0.95), rgba(14,26,46,0.95))",backdropFilter:"blur(20px)",borderBottom:"1px solid "+C.border3,padding:isMobile?"14px 16px":"16px 24px",display:"flex",alignItems:isMobile?"flex-start":"center",gap:isMobile?10:16,flexWrap:"wrap",flexDirection:isMobile?"column":"row"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{width:isMobile?32:40,height:isMobile?32:40,background:"linear-gradient(135deg,#0ea5e9,#818cf8)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:isMobile?15:18,flexShrink:0,boxShadow:"0 4px 16px rgba(14,165,233,0.3)"}}>🏛</div>
-          <div>
-            <div style={{fontSize:isMobile?14:16,fontWeight:700,color:"#f8fafc",letterSpacing:0.5}}>建築法規 AI 檢討系統</div>
-            <div style={{fontSize:isMobile?10:11,color:C.dim,fontWeight:400}}>Building Code Review · v8.0 · {REG_DB.length} 條 · IndexedDB</div>
-          </div>
-        </div>
-        <div style={{marginLeft:isMobile?0:"auto",display:"flex",gap:6,flexWrap:"nowrap",overflowX:"auto",WebkitOverflowScrolling:"touch",width:isMobile?"100%":"auto",paddingBottom:2}}>
-          {[["calc","⚖ 驗算"],["dev","📊 開發量"],["space","📐 面積"],["search","📖 法規"],["ai","✨ AI"],["ref","🗺 細則"],["projects","💾 專案"]].map(([t,l])=>TB(t,l))}
-        </div>
-      </div>
-
-      {/* PROJECT BAR */}
-      <div style={{background:"rgba(10,18,32,0.6)",backdropFilter:"blur(10px)",borderBottom:"1px solid "+C.border,padding:isMobile?"14px 16px":"16px 24px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}}>
-          <span style={{fontSize:11,color:C.dim,letterSpacing:2,fontWeight:600}}>PROJ</span>
-          <div style={{flex:1,minWidth:isMobile?120:150}}><input value={proj} onChange={e=>setProj(e.target.value)} placeholder="專案名稱" style={{...INP,background:"rgba(56,189,248,0.05)",border:"1px solid rgba(56,189,248,0.15)",color:C.cyan,fontWeight:600}}/></div>
-          <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(14,165,233,0.1)",border:"1px solid rgba(14,165,233,0.2)",color:"#0ea5e9",borderRadius:10,padding:"7px 14px",cursor:"pointer",fontSize:11,fontWeight:500}}>匯入</button>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImport} style={{display:"none"}}/>
-          {impMsg&&<span style={{fontSize:10,color:impMsg.includes("成功")?C.green:C.yellow}}>{impMsg}</span>}
-          <button onClick={doSave} style={{background:"rgba(52,211,153,0.1)",border:"1px solid rgba(52,211,153,0.2)",color:C.green,borderRadius:10,padding:"7px 14px",cursor:"pointer",fontSize:11,fontWeight:500}}>儲存</button>
-          {saveMsg&&<span style={{fontSize:10,color:saveMsg.includes("儲存")?C.green:C.yellow}}>{saveMsg}</span>}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
-          {[{l:"縣市",el:<select value={county} onChange={e=>{setCounty(e.target.value);setZone(Object.keys(zones[e.target.value]?.zones||{})[0]||"");}} style={INP}>{Object.keys(zones).map(c=><option key={c}>{c}</option>)}</select>},{l:"用途分區",el:<select value={zone} onChange={e=>setZone(e.target.value)} style={INP}>{Object.keys(zones[county]?.zones||{}).map(z=><option key={z}>{z}</option>)}</select>},{l:"建築類型",el:<select value={btype} onChange={e=>{setBtype(e.target.value);setChk({});setAiList([]);}} style={INP}>{BTYPES.map(t=><option key={t}>{t}</option>)}</select>},{l:"基地面積㎡",el:<input type="number" value={siteArea} onChange={e=>setSiteArea(e.target.value)} style={INP}/>},{l:"建築面積㎡",el:<input type="number" value={footArea} onChange={e=>setFootArea(e.target.value)} style={INP}/>},{l:"地上層數",el:<input type="number" value={floors} onChange={e=>setFloors(e.target.value)} style={INP}/>},{l:"地下層數",el:<input type="number" value={bsFlrs} onChange={e=>setBsFlrs(e.target.value)} style={{...INP,color:C.purple}}/>},{l:"屋突層數",el:<input type="number" min={0} max={3} value={rfCount} onChange={e=>setRfCount(Math.max(0,Math.min(3,parseInt(e.target.value)||0)))} style={{...INP,color:C.yellow}}/>},{l:"地上層高M",el:<input type="number" step="0.1" value={gfh} onChange={e=>setGfh(e.target.value)} style={INP}/>},{l:"地下層高M",el:<input type="number" step="0.1" value={bsfh} onChange={e=>setBsfh(e.target.value)} style={{...INP,color:C.purple}}/>},{l:"戶數",el:<input type="number" value={units} onChange={e=>setUnits(e.target.value)} style={INP}/>},{l:"設計停車位",el:<input type="number" value={parking} onChange={e=>setParking(e.target.value)} style={INP}/>}].map(({l,el})=><div key={l}><div style={{fontSize:10,color:C.dim,marginBottom:4,fontWeight:500}}>{l}</div>{el}</div>)}
-        </div>
-        <div style={{marginTop:12,padding:"12px 14px",background:"rgba(15,23,42,0.4)",borderRadius:12,border:"1px solid "+C.border}}>
-          <div style={{fontSize:10,color:C.orange,fontWeight:600,marginBottom:8,letterSpacing:0.5}}>§162 / §164 參數設定</div>
-          <div style={{display:"flex",gap:isMobile?10:14,flexWrap:"wrap",alignItems:"center"}}>
-            <label style={{display:"flex",alignItems:"center",gap:5,fontSize:isMobile?10:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={hasSharedLobby} onChange={e=>setHasSharedLobby(e.target.checked)}/>共用梯廳</label>
-            <label style={{display:"flex",alignItems:"center",gap:5,fontSize:isMobile?10:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={singleStair} onChange={e=>setSingleStair(e.target.checked)}/>僅一座直通梯</label>
-            {isRes&&<label style={{display:"flex",alignItems:"center",gap:5,fontSize:isMobile?10:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={hasVoid} onChange={e=>setHasVoid(e.target.checked)}/>挑空設計</label>}
-            <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,color:C.dim}}>道路寬</span><input type="number" value={roadWidth} onChange={e=>setRoadWidth(e.target.value)} placeholder="—" style={{...INP,width:56,padding:"5px 7px",fontSize:11,textAlign:"center"}}/></div>
-            <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,color:C.dim}}>退縮D</span><input type="number" value={setbackDist} onChange={e=>setSetbackDist(e.target.value)} placeholder="—" style={{...INP,width:56,padding:"5px 7px",fontSize:11,textAlign:"center"}}/></div>
-            {shadowMaxH&&<span style={{fontSize:11,color:C.yellow,fontWeight:600}}>→ H≤{shadowMaxH.toFixed(1)}M</span>}
-          </div>
-        </div>
-        {!isMobile&&<div style={{marginTop:10}}><div style={{fontSize:10,color:C.dim,marginBottom:4}}>備註</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={1} style={{...INP,resize:"none"}}/></div>}
-      </div>
-
-      {/* AUTO ALERTS */}
-      {autoAlerts.length>0&&tab!=="search"&&(
-        <div style={{background:"rgba(6,11,20,0.8)",backdropFilter:"blur(10px)",borderBottom:"1px solid "+C.border,padding:isMobile?"8px 16px":"10px 24px"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:showAutoAlerts?8:0,flexWrap:"wrap"}}>
-            <span style={{fontSize:11,color:C.orange,fontWeight:600}}>智慧法規提示</span>
-            <span style={{background:autoAlerts.filter(a=>a.level==="error").length>0?"rgba(248,113,113,0.1)":"rgba(52,211,153,0.1)",color:autoAlerts.filter(a=>a.level==="error").length>0?C.red:C.green,border:"1px solid",borderColor:autoAlerts.filter(a=>a.level==="error").length>0?"rgba(248,113,113,0.2)":"rgba(52,211,153,0.2)",borderRadius:12,padding:"2px 10px",fontSize:10,fontWeight:600}}>{autoAlerts.filter(a=>a.level==="error").length} 錯誤 · {autoAlerts.filter(a=>a.level==="warn").length} 警告</span>
-            <button onClick={()=>setShowAutoAlerts(v=>!v)} style={{marginLeft:"auto",background:"transparent",border:"1px solid "+C.border,color:C.dim,borderRadius:8,padding:"3px 10px",cursor:"pointer",fontSize:10}}>{showAutoAlerts?"收合":"展開"}</button>
-          </div>
-          {showAutoAlerts&&(
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}} className="animate-fade-in">
-              {autoAlerts.map((a,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,background:AL[a.level].bg,border:"1px solid "+AL[a.level].border,borderRadius:10,padding:"7px 12px",flex:isMobile?"1 1 100%":"1 1 280px",minWidth:isMobile?0:220}}>
-                  <span style={{color:AL[a.level].color,fontWeight:700,fontSize:12,flexShrink:0}}>{AL[a.level].icon}</span>
-                  <div style={{minWidth:0}}>
-                    <span style={{color:AL[a.level].color,fontSize:10,fontWeight:700,marginRight:6}}>{a.code}</span>
-                    <span style={{color:C.muted,fontSize:10}}>{a.msg}</span>
-                  </div>
-                </div>
-              ))}
+      {/* ── SIDEBAR (desktop) ── */}
+      {!isMobile&&(
+        <aside style={{width:218,flexShrink:0,background:"rgba(8,14,26,0.97)",backdropFilter:"blur(20px)",borderRight:"1px solid "+C.border,display:"flex",flexDirection:"column",position:"sticky",top:0,height:"100vh",overflowY:"hidden"}}>
+          {/* Brand */}
+          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid "+C.border2}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:36,height:36,background:"linear-gradient(135deg,#2563eb,#7c3aed)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0,boxShadow:"0 0 18px rgba(37,99,235,0.4)"}}>⬡</div>
+              <div>
+                <div style={{fontSize:18,fontWeight:800,color:"#f8fafc",letterSpacing:-0.5,lineHeight:1}}>建面</div>
+                <div style={{fontSize:9,color:C.dim,letterSpacing:0.8,marginTop:2}}>建築面積試算平台</div>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+          {/* Nav */}
+          <nav style={{flex:1,overflowY:"auto",padding:"10px 0 10px 1px"}}>
+            {NAV.map((g,gi)=>(
+              <div key={gi} style={{marginBottom:4}}>
+                {g.g&&<div style={{fontSize:9,color:C.faint,fontWeight:700,letterSpacing:1.3,padding:"12px 14px 4px",textTransform:"uppercase"}}>{g.g}</div>}
+                {g.items.map(it=><NI key={it.id} {...it}/>)}
+              </div>
+            ))}
+          </nav>
+          {/* Project footer */}
+          <div style={{padding:"12px 14px",borderTop:"1px solid "+C.border2}}>
+            <div style={{fontSize:9,color:C.faint,letterSpacing:0.8,fontWeight:600,marginBottom:5}}>目前專案</div>
+            <div style={{fontSize:12,fontWeight:600,color:proj?C.text:C.faint,marginBottom:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{proj||"— 未命名"}</div>
+            <div style={{display:"flex",gap:6}}>
+              <button onClick={doSave} style={{flex:1,background:"rgba(37,99,235,0.1)",border:"1px solid rgba(59,130,246,0.25)",color:"#60a5fa",borderRadius:8,padding:"6px",cursor:"pointer",fontSize:11,fontWeight:500}}>儲存</button>
+              <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(30,45,64,0.4)",border:"1px solid "+C.border,color:C.dim,borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:11}}>匯入</button>
+            </div>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImport} style={{display:"none"}}/>
+            {saveMsg&&<div style={{fontSize:10,color:saveMsg.includes("儲存")?C.green:C.yellow,marginTop:5,textAlign:"center"}}>{saveMsg}</div>}
+            {impMsg&&<div style={{fontSize:10,color:impMsg.includes("成功")?C.green:C.yellow,marginTop:4,textAlign:"center"}}>{impMsg}</div>}
+          </div>
+        </aside>
       )}
 
+      {/* ── MAIN ── */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0,overflowX:"hidden"}}>
+
+        {/* Mobile header */}
+        {isMobile&&(
+          <div style={{background:"rgba(8,14,26,0.97)",backdropFilter:"blur(20px)",borderBottom:"1px solid "+C.border,padding:"11px 16px",display:"flex",alignItems:"center",gap:10,position:"sticky",top:0,zIndex:100}}>
+            <div style={{width:28,height:28,background:"linear-gradient(135deg,#2563eb,#7c3aed)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>⬡</div>
+            <span style={{fontSize:16,fontWeight:800,color:"#f8fafc",letterSpacing:-0.3,flex:1}}>建面</span>
+            <button onClick={doSave} style={{background:"rgba(37,99,235,0.1)",border:"1px solid rgba(59,130,246,0.25)",color:"#60a5fa",borderRadius:8,padding:"5px 13px",cursor:"pointer",fontSize:11,fontWeight:500}}>儲存</button>
+            {saveMsg&&<span style={{fontSize:10,color:C.green}}>{saveMsg}</span>}
+          </div>
+        )}
+
+        {/* Mobile tab bar */}
+        {isMobile&&(
+          <div style={{background:"rgba(8,14,26,0.95)",backdropFilter:"blur(10px)",borderBottom:"1px solid "+C.border,display:"flex",overflowX:"auto",WebkitOverflowScrolling:"touch",padding:"6px 10px",gap:3,position:"sticky",top:50,zIndex:99}}>
+            {[["home","⌂","首頁"],["calc","⚖","驗算"],["dev","⊞","開發"],["space","⊟","面積"],["search","◉","法規"],["ai","✦","AI"],["ref","◈","細則"],["projects","◧","專案"]].map(([t,ic,lb])=>(
+              <button key={t} onClick={()=>setTab(t)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"5px 9px",borderRadius:7,background:tab===t?"rgba(59,130,246,0.15)":"transparent",color:tab===t?"#60a5fa":C.dim,border:tab===t?"1px solid rgba(59,130,246,0.25)":"1px solid transparent",cursor:"pointer",flexShrink:0,fontSize:15,transition:"all 0.15s ease"}}>
+                {ic}<span style={{fontSize:8,fontWeight:tab===t?600:400}}>{lb}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── HOME TAB ── */}
+        {tab==="home"&&(
+          <div style={{padding:isMobile?"16px":"24px 28px",display:"flex",flexDirection:"column",gap:20}} className="tab-content">
+            {/* Welcome */}
+            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16,flexWrap:"wrap"}}>
+              <div>
+                <div style={{fontSize:isMobile?18:24,fontWeight:800,color:"#f8fafc",letterSpacing:-0.5,marginBottom:4}}>
+                  {proj?`${proj}`:"歡迎使用建面"}
+                </div>
+                <div style={{fontSize:13,color:C.muted}}>{proj?`${county} · ${zone} · ${btype}`:"建築面積與法規輔助計算平台"}</div>
+              </div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <button onClick={()=>setTab("calc")} style={{background:"linear-gradient(135deg,#2563eb,#3b82f6)",border:"none",color:"white",borderRadius:10,padding:"9px 20px",cursor:"pointer",fontSize:12,fontWeight:600,boxShadow:"0 4px 14px rgba(37,99,235,0.35)"}}>開始驗算</button>
+                <button onClick={()=>setTab("space")} style={{background:"rgba(59,130,246,0.08)",border:"1px solid rgba(59,130,246,0.2)",color:"#60a5fa",borderRadius:10,padding:"9px 20px",cursor:"pointer",fontSize:12,fontWeight:500}}>面積試算</button>
+                <button onClick={()=>setTab("projects")} style={{background:"rgba(30,45,64,0.5)",border:"1px solid "+C.border,color:C.muted,borderRadius:10,padding:"9px 20px",cursor:"pointer",fontSize:12}}>專案管理</button>
+              </div>
+            </div>
+
+            {/* Key metrics */}
+            {sa>0&&(
+              <div>
+                <div style={{fontSize:10,color:C.dim,letterSpacing:1.5,fontWeight:600,marginBottom:10}}>當前專案試算結果</div>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+                  {[
+                    {l:"容積率",v:n1(actFARr)+"%",sub:"允建 "+n1(allowFARr)+"%",c:actFARr>allowFARr?"#ef4444":"#3b82f6",warn:actFARr>allowFARr},
+                    {l:"建蔽率",v:isNaN(bcrC)?"—":n1(bcrC)+"%",sub:"上限 "+BCR+"%",c:bcrC>BCR?"#ef4444":"#3b82f6",warn:bcrC>BCR},
+                    {l:"總容積",v:n2(sumFAR)+"㎡",sub:py(sumFAR)+" 坪",c:"#60a5fa"},
+                    {l:"地上層數",v:fl+"層",sub:"地下 "+bfl+"層",c:"#a78bfa"},
+                    {l:"法規提示",v:autoAlerts.filter(a=>a.level==="error").length+" 錯誤",sub:autoAlerts.filter(a=>a.level==="warn").length+" 警告",c:autoAlerts.filter(a=>a.level==="error").length>0?"#ef4444":"#34d399",warn:autoAlerts.filter(a=>a.level==="error").length>0},
+                    {l:"條文資料庫",v:REG_DB.length+" 條",sub:Object.values(checkedRegs).filter(Boolean).length+" 已審查",c:"#34d399"},
+                  ].map(({l,v,sub,c,warn})=>(
+                    <div key={l} style={{background:warn?"rgba(127,29,29,0.2)":"rgba(15,23,42,0.5)",border:"1px solid "+(warn?"rgba(248,113,113,0.25)":"rgba(59,130,246,0.1)"),borderRadius:12,padding:"14px 16px"}}>
+                      <div style={{fontSize:10,color:C.dim,marginBottom:6,letterSpacing:0.3}}>{l}</div>
+                      <div style={{fontSize:isMobile?16:20,fontWeight:800,color:c,fontFamily:"'JetBrains Mono',monospace",lineHeight:1,marginBottom:4}}>{v}</div>
+                      <div style={{fontSize:10,color:C.dim}}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Alerts summary on home */}
+            {autoAlerts.length>0&&(
+              <div>
+                <div style={{fontSize:10,color:C.dim,letterSpacing:1.5,fontWeight:600,marginBottom:10}}>智慧法規提示</div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {autoAlerts.slice(0,5).map((a,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:AL[a.level].bg,border:"1px solid "+AL[a.level].border,borderRadius:10,padding:"9px 14px"}}>
+                      <span style={{color:AL[a.level].color,fontWeight:700,fontSize:13,flexShrink:0}}>{AL[a.level].icon}</span>
+                      <span style={{color:AL[a.level].color,fontSize:11,fontWeight:600,flexShrink:0,minWidth:60}}>{a.code}</span>
+                      <span style={{color:C.muted,fontSize:11,flex:1}}>{a.msg}</span>
+                      <button onClick={()=>setTab("calc")} style={{background:"transparent",border:"1px solid "+C.border,color:C.dim,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:10,flexShrink:0}}>查看</button>
+                    </div>
+                  ))}
+                  {autoAlerts.length>5&&<div style={{fontSize:11,color:C.dim,textAlign:"center",paddingTop:4}}>還有 {autoAlerts.length-5} 項提示 → <button onClick={()=>setTab("calc")} style={{background:"transparent",border:"none",color:"#60a5fa",cursor:"pointer",fontSize:11}}>前往驗算</button></div>}
+                </div>
+              </div>
+            )}
+
+            {/* Quick setup (if no project data) */}
+            {!sa&&(
+              <div style={{background:"rgba(37,99,235,0.05)",border:"1px solid rgba(59,130,246,0.15)",borderRadius:14,padding:"20px 24px"}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#60a5fa",marginBottom:8}}>快速開始</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:16,lineHeight:1.7}}>進站 → 建立專案 → 輸入基地條件 → 面積試算 → 法規比對 → 驗算 → 儲存輸出</div>
+                <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                  {[["⚖ 法規驗算","calc"],["📐 面積試算","space"],["📊 開發量","dev"],["📖 法規查詢","search"]].map(([l,t])=>(
+                    <button key={t} onClick={()=>setTab(t)} style={{background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.2)",color:"#60a5fa",borderRadius:9,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:500}}>{l}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent projects */}
+            {saved.length>0&&(
+              <div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                  <div style={{fontSize:10,color:C.dim,letterSpacing:1.5,fontWeight:600}}>最近專案</div>
+                  <button onClick={()=>setTab("projects")} style={{background:"transparent",border:"none",color:"#60a5fa",cursor:"pointer",fontSize:11}}>全部查看 →</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(220px,1fr))",gap:10}}>
+                  {saved.slice(0,3).map(p=>(
+                    <div key={p.k} style={{background:"rgba(15,23,42,0.5)",border:"1px solid rgba(59,130,246,0.08)",borderRadius:12,padding:"14px 16px",cursor:"pointer",transition:"all 0.15s ease"}} onClick={()=>{doLoad(p);setTab("calc");}}>
+                      <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.proj}</div>
+                      <div style={{fontSize:11,color:C.muted,marginBottom:8}}>{p.county}·{p.zone}·{p.btype}</div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <span style={{fontSize:10,color:C.dim}}>{p.siteArea||"?"}㎡ · {p.floors||"?"}層</span>
+                        <span style={{fontSize:10,color:C.dim}}>{p.at}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Feature grid */}
+            <div>
+              <div style={{fontSize:10,color:C.dim,letterSpacing:1.5,fontWeight:600,marginBottom:10}}>功能模組</div>
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(3,1fr)",gap:10}}>
+                {[
+                  {t:"⚖ 法規驗算",d:"§160~§166 條文自動驗算，建蔽率、容積率、日照高度",tab:"calc",c:"#3b82f6"},
+                  {t:"📊 開發量評估",d:"容積獎勵試算、機電佔比、最大開發量評估",tab:"dev",c:"#a78bfa"},
+                  {t:"📐 面積試算",d:"§162 陽台梯廳免計、逐層輸入、地下室、屋突詳細",tab:"space",c:"#2dd4bf"},
+                  {t:"📖 法規查詢",d:REG_DB.length+"條建技規、消防法規、無障礙設施快速搜尋",tab:"search",c:"#34d399"},
+                  {t:"✦ AI 助理",d:"AI 智能生成本案法規查核清單，輔助設計決策",tab:"ai",c:"#fbbf24"},
+                  {t:"💾 專案管理",d:"IndexedDB 儲存，多專案管理，匯入 Excel",tab:"projects",c:"#fb923c"},
+                ].map(({t,d,tab:tgt,c})=>(
+                  <div key={tgt} onClick={()=>setTab(tgt)} style={{background:"rgba(15,23,42,0.4)",border:"1px solid rgba(59,130,246,0.07)",borderRadius:12,padding:isMobile?"12px":"14px 16px",cursor:"pointer",transition:"all 0.2s ease"}}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor="rgba(59,130,246,0.2)";e.currentTarget.style.background="rgba(15,23,42,0.7)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(59,130,246,0.07)";e.currentTarget.style.background="rgba(15,23,42,0.4)";}}>
+                    <div style={{fontSize:isMobile?12:13,fontWeight:700,color:c,marginBottom:6}}>{t}</div>
+                    <div style={{fontSize:11,color:C.muted,lineHeight:1.6}}>{d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PROJECT BAR (shown for non-home tabs) */}
+        {tab!=="home"&&(
+          <div style={{background:"rgba(8,14,26,0.7)",backdropFilter:"blur(10px)",borderBottom:"1px solid "+C.border,padding:isMobile?"12px 14px":"14px 22px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+              <span style={{fontSize:10,color:C.dim,letterSpacing:2,fontWeight:600}}>PROJ</span>
+              <div style={{flex:1,minWidth:isMobile?100:150}}><input value={proj} onChange={e=>setProj(e.target.value)} placeholder="專案名稱" style={{...INP2,fontWeight:600,color:"#60a5fa"}}/></div>
+              {isMobile&&<>
+                <button onClick={()=>fileRef.current?.click()} style={{background:"rgba(30,45,64,0.5)",border:"1px solid "+C.border,color:C.dim,borderRadius:9,padding:"6px 12px",cursor:"pointer",fontSize:11}}>匯入</button>
+                <input ref={fileRef} type="file" accept=".xlsx,.xls" onChange={onImport} style={{display:"none"}}/>
+                {impMsg&&<span style={{fontSize:10,color:impMsg.includes("成功")?C.green:C.yellow}}>{impMsg}</span>}
+              </>}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(125px,1fr))",gap:8}}>
+              {[{l:"縣市",el:<select value={county} onChange={e=>{setCounty(e.target.value);setZone(Object.keys(zones[e.target.value]?.zones||{})[0]||"");}} style={INP2}>{Object.keys(zones).map(c=><option key={c}>{c}</option>)}</select>},{l:"用途分區",el:<select value={zone} onChange={e=>setZone(e.target.value)} style={INP2}>{Object.keys(zones[county]?.zones||{}).map(z=><option key={z}>{z}</option>)}</select>},{l:"建築類型",el:<select value={btype} onChange={e=>{setBtype(e.target.value);setChk({});setAiList([]);}} style={INP2}>{BTYPES.map(t=><option key={t}>{t}</option>)}</select>},{l:"基地面積㎡",el:<input type="number" value={siteArea} onChange={e=>setSiteArea(e.target.value)} style={INP2}/>},{l:"建築面積㎡",el:<input type="number" value={footArea} onChange={e=>setFootArea(e.target.value)} style={INP2}/>},{l:"地上層數",el:<input type="number" value={floors} onChange={e=>setFloors(e.target.value)} style={INP2}/>},{l:"地下層數",el:<input type="number" value={bsFlrs} onChange={e=>setBsFlrs(e.target.value)} style={{...INP2,color:C.purple}}/>},{l:"屋突層數",el:<input type="number" min={0} max={3} value={rfCount} onChange={e=>setRfCount(Math.max(0,Math.min(3,parseInt(e.target.value)||0)))} style={{...INP2,color:C.yellow}}/>},{l:"地上層高M",el:<input type="number" step="0.1" value={gfh} onChange={e=>setGfh(e.target.value)} style={INP2}/>},{l:"地下層高M",el:<input type="number" step="0.1" value={bsfh} onChange={e=>setBsfh(e.target.value)} style={{...INP2,color:C.purple}}/>},{l:"戶數",el:<input type="number" value={units} onChange={e=>setUnits(e.target.value)} style={INP2}/>},{l:"設計停車位",el:<input type="number" value={parking} onChange={e=>setParking(e.target.value)} style={INP2}/>}].map(({l,el})=><div key={l}><div style={{fontSize:9,color:C.dim,marginBottom:3,fontWeight:500,letterSpacing:0.3}}>{l}</div>{el}</div>)}
+            </div>
+            <div style={{marginTop:10,padding:"10px 12px",background:"rgba(15,23,42,0.4)",borderRadius:10,border:"1px solid "+C.border}}>
+              <div style={{fontSize:9,color:C.orange,fontWeight:700,marginBottom:7,letterSpacing:0.5}}>§162 / §164 參數</div>
+              <div style={{display:"flex",gap:isMobile?10:16,flexWrap:"wrap",alignItems:"center"}}>
+                <label style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={hasSharedLobby} onChange={e=>setHasSharedLobby(e.target.checked)}/>共用梯廳</label>
+                <label style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={singleStair} onChange={e=>setSingleStair(e.target.checked)}/>僅一座直通梯</label>
+                {isRes&&<label style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:C.muted,cursor:"pointer"}}><input type="checkbox" checked={hasVoid} onChange={e=>setHasVoid(e.target.checked)}/>挑空設計</label>}
+                <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,color:C.dim}}>道路寬</span><input type="number" value={roadWidth} onChange={e=>setRoadWidth(e.target.value)} placeholder="—" style={{...INP2,width:52,padding:"4px 7px",fontSize:11,textAlign:"center"}}/></div>
+                <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontSize:10,color:C.dim}}>退縮D</span><input type="number" value={setbackDist} onChange={e=>setSetbackDist(e.target.value)} placeholder="—" style={{...INP2,width:52,padding:"4px 7px",fontSize:11,textAlign:"center"}}/></div>
+                {shadowMaxH&&<span style={{fontSize:11,color:C.yellow,fontWeight:600}}>→ H≤{shadowMaxH.toFixed(1)}M</span>}
+              </div>
+            </div>
+            {!isMobile&&<div style={{marginTop:8}}><div style={{fontSize:9,color:C.dim,marginBottom:3,letterSpacing:0.3}}>備註</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={1} style={{...INP2,resize:"none"}}/></div>}
+          </div>
+        )}
+
+        {/* AUTO ALERTS (non-home, non-search) */}
+        {autoAlerts.length>0&&tab!=="search"&&tab!=="home"&&(
+          <div style={{background:"rgba(8,14,26,0.8)",backdropFilter:"blur(10px)",borderBottom:"1px solid "+C.border,padding:isMobile?"7px 14px":"8px 22px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:showAutoAlerts?7:0,flexWrap:"wrap"}}>
+              <span style={{fontSize:10,color:C.orange,fontWeight:700,letterSpacing:0.5}}>智慧法規提示</span>
+              <span style={{background:autoAlerts.filter(a=>a.level==="error").length>0?"rgba(248,113,113,0.1)":"rgba(52,211,153,0.1)",color:autoAlerts.filter(a=>a.level==="error").length>0?C.red:C.green,border:"1px solid",borderColor:autoAlerts.filter(a=>a.level==="error").length>0?"rgba(248,113,113,0.2)":"rgba(52,211,153,0.2)",borderRadius:10,padding:"2px 9px",fontSize:9,fontWeight:600}}>{autoAlerts.filter(a=>a.level==="error").length} 錯誤 · {autoAlerts.filter(a=>a.level==="warn").length} 警告</span>
+              <button onClick={()=>setShowAutoAlerts(v=>!v)} style={{marginLeft:"auto",background:"transparent",border:"1px solid "+C.border,color:C.dim,borderRadius:7,padding:"2px 9px",cursor:"pointer",fontSize:10}}>{showAutoAlerts?"收合":"展開"}</button>
+            </div>
+            {showAutoAlerts&&(
+              <div style={{display:"flex",gap:7,flexWrap:"wrap"}} className="animate-fade-in">
+                {autoAlerts.map((a,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:7,background:AL[a.level].bg,border:"1px solid "+AL[a.level].border,borderRadius:9,padding:"6px 11px",flex:isMobile?"1 1 100%":"1 1 260px",minWidth:isMobile?0:200}}>
+                    <span style={{color:AL[a.level].color,fontWeight:700,fontSize:11,flexShrink:0}}>{AL[a.level].icon}</span>
+                    <div style={{minWidth:0}}>
+                      <span style={{color:AL[a.level].color,fontSize:9,fontWeight:700,marginRight:5}}>{a.code}</span>
+                      <span style={{color:C.muted,fontSize:10}}>{a.msg}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB CONTENT WRAPPER */}
+        <div style={{flex:1,overflowY:"auto",padding:tab==="home"?0:(isMobile?"14px 14px":"18px 22px")}} className={tab!=="home"?"tab-content":""}>
       <div style={{padding:isMobile?"14px 16px":"20px 24px"}} className="tab-content">
 
         {/* ═══ CALC TAB ═══ */}
@@ -864,6 +1048,9 @@ export default function App() {
           :<div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(270px,1fr))",gap:12}}>{saved.map(p=>(<Card key={p.k} style={{padding:16}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div style={{fontSize:14,fontWeight:600,color:C.cyan}}>{p.proj}</div><span style={{fontSize:10,color:C.dim}}>{p.at}</span></div><div style={{fontSize:11,color:C.muted,marginBottom:4}}>{p.county}·{p.zone}·{p.btype}</div><div style={{fontSize:10,color:C.dim,marginBottom:12}}>基地{p.siteArea||"?"}㎡·{p.floors||"?"}層</div><div style={{display:"flex",gap:8}}><button onClick={()=>doLoad(p)} style={{flex:1,background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.2)",color:C.cyan,borderRadius:10,padding:"8px",cursor:"pointer",fontSize:11,fontWeight:500}}>載入</button><button onClick={()=>doDel(p.k)} style={{background:"rgba(127,29,29,0.2)",border:"1px solid rgba(248,113,113,0.2)",color:C.red,borderRadius:10,padding:"8px 14px",cursor:"pointer",fontSize:11}}>刪除</button></div></Card>))}</div>}
         </div>)}
 
+        </div>)}
+
+        </div>
       </div>
     </div>
   );
