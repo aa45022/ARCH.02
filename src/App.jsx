@@ -5,7 +5,7 @@ import { calcFAR162, calcMaxH, checkFH, computeFloorCalcs, getMepFromItems, comp
 import { storage } from "./lib/storage.js";
 import { colors as C, glass, alertStyles as AL, priorityColors as PC } from "./theme.js";
 import { useIsMobile } from "./hooks/useIsMobile.js";
-import { Arc, Badge, CRow, RL, SectionHeader as SH2, Card, Highlight } from "./components/ui.jsx";
+import { Arc, Badge, CRow, RL, SectionHeader as SH2, Card, StatCard, Highlight } from "./components/ui.jsx";
 
 const loadXLSX = () => import("xlsx");
 
@@ -248,7 +248,7 @@ export default function App() {
           </div>
         </div>
         <div style={{marginLeft:isMobile?0:"auto",display:"flex",gap:6,flexWrap:"nowrap",overflowX:"auto",WebkitOverflowScrolling:"touch",width:isMobile?"100%":"auto",paddingBottom:2}}>
-          {[["calc","驗算"],["dev","開發量"],["space","面積"],["search","法規"],["ai","AI"],["ref","細則"],["projects","專案"]].map(([t,l])=>TB(t,l))}
+          {[["calc","⚖ 驗算"],["dev","📊 開發量"],["space","📐 面積"],["search","📖 法規"],["ai","✨ AI"],["ref","🗺 細則"],["projects","💾 專案"]].map(([t,l])=>TB(t,l))}
         </div>
       </div>
 
@@ -449,15 +449,291 @@ export default function App() {
 
         {/* ═══ SPACE TAB ═══ */}
         {tab==="space"&&(
-          <div style={{display:"flex",flexDirection:"column",gap:16}}>
-            <div style={{fontSize:11,color:C.dim,letterSpacing:2,fontWeight:600}}>面積計算表</div>
-            <Card style={{padding:isMobile?"14px":"18px 22px"}}>
-              <div style={{display:"flex",gap:isMobile?12:24,flexWrap:"wrap",marginBottom:14}}>
-                {[["屋突",n2(rfTotal),C.yellow],["地上容積",n2(aboveFAR),C.cyan],["地下計容",n2(bsFARContrib),bsFARContrib>0?C.orange:C.faint],["總容積",n2(sumFAR),C.cyan],["實設率",n1(actFARr)+"%",actFARr>allowFARr?C.red:C.green]].map(([l,v,c])=>(<div key={l} style={{minWidth:isMobile?75:95}}><div style={{fontSize:10,color:C.dim,marginBottom:3}}>{l}</div><div style={{fontSize:isMobile?14:16,fontWeight:700,color:c,fontFamily:"'JetBrains Mono',monospace"}}>{v}</div></div>))}
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{fontSize:11,color:C.dim,letterSpacing:2,fontWeight:600}}>面積計算表 — §162 容積免計 · 樓層詳細輸入</div>
+
+            {/* Summary bar */}
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(auto-fill,minmax(130px,1fr))",gap:10}}>
+              <StatCard label="地上樓地板" value={n2(sumFlr)} unit="㎡" color={C.text}/>
+              <StatCard label="地上容積" value={n2(aboveFAR)} unit="㎡" color={C.cyan}/>
+              <StatCard label="地下計容" value={n2(bsFARContrib)} unit="㎡" color={bsFARContrib>0?C.orange:C.dim}/>
+              <StatCard label="總容積" value={n2(sumFAR)} unit="㎡" color={C.cyan}/>
+              <StatCard label="陽台免計" value={n2(sumBalExempt)} unit="㎡" color={C.lav}/>
+              <StatCard label="梯廳免計" value={n2(sumCorrExempt)} unit="㎡" color={C.green}/>
+              <StatCard label="屋突合計" value={n2(rfTotal)} unit="㎡" color={rfTotal>rfMaxArea?C.red:C.yellow} warn={rfTotal>rfMaxArea}/>
+              <StatCard label="容積實設率" value={n1(actFARr)} unit="%" color={actFARr>allowFARr?C.red:C.green} warn={actFARr>allowFARr} sub={"允建 "+n1(allowFARr)+"%"}/>
+            </div>
+            <Card style={{padding:"14px 18px",background:"rgba(15,23,42,0.5)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+                <span style={{fontSize:11,color:C.dim}}>容積達成率</span>
+                <span style={{fontSize:11,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:actFARr>allowFARr?C.red:C.cyan}}>
+                  {n1(actFARr)}% / {n1(allowFARr)}%
+                </span>
+                <span style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:actFARr>allowFARr?C.red:C.green}}>{actFARr>allowFARr?"⚠ 超過允建":"✓ 符合法規"}</span>
               </div>
-              <div style={{height:8,background:"rgba(30,45,64,0.5)",borderRadius:4,overflow:"hidden"}}><div className="progress-bar" style={{width:Math.min((actFARr/(allowFARr||1))*100,100)+"%",height:"100%",background:actFARr>allowFARr?"#ef4444":"linear-gradient(90deg,#38bdf8,#818cf8)",borderRadius:4}}/></div>
-              <div style={{marginTop:6,fontSize:10,textAlign:"right"}}>{actFARr>allowFARr?<span style={{color:C.red}}>超過允建</span>:<span style={{color:C.green}}>符合管制</span>}</div>
+              <div style={{height:10,background:"rgba(30,45,64,0.6)",borderRadius:5,overflow:"hidden",border:"1px solid rgba(56,189,248,0.06)"}}>
+                <div className="progress-bar" style={{width:Math.min((actFARr/(allowFARr||1))*100,100)+"%",height:"100%",background:actFARr>allowFARr?"linear-gradient(90deg,#ef4444,#f87171)":"linear-gradient(90deg,#38bdf8,#818cf8)",borderRadius:5,boxShadow:actFARr>allowFARr?"0 0 8px rgba(239,68,68,0.4)":"0 0 8px rgba(56,189,248,0.3)"}}/>
+              </div>
             </Card>
+
+            {/* Unit Types */}
+            <Card>
+              {SH("🏠","戶型設定",C.cyan)}
+              <div style={{padding:"14px 16px",display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:4}}>
+                  <button onClick={addUT} style={{background:"rgba(56,189,248,0.08)",border:"1px solid rgba(56,189,248,0.2)",color:C.cyan,borderRadius:8,padding:"5px 14px",cursor:"pointer",fontSize:11}}>＋ 新增戶型</button>
+                  <span style={{fontSize:10,color:C.dim}}>共 {unitTypes.length} 種戶型</span>
+                </div>
+                {unitTypes.map(ut=>{
+                  const sum=utSum.find(s=>s.id===ut.id)||{};
+                  const isExp=expandUT===ut.id;
+                  return (
+                    <div key={ut.id} style={{border:"1px solid "+(isExp?"rgba(56,189,248,0.2)":"rgba(56,189,248,0.06)"),borderRadius:12,overflow:"hidden"}}>
+                      <div onClick={()=>setExpandUT(isExp?null:ut.id)} style={{padding:"10px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,background:isExp?"rgba(18,33,58,0.5)":"rgba(15,23,42,0.3)"}}>
+                        <span style={{color:C.cyan,fontWeight:700,fontSize:13}}>{ut.name}</span>
+                        <span style={{fontSize:10,color:C.muted,flex:1}}>室內 {n2(sum.indoor||0)}㎡ · 陽台 {n2(sum.bal||0)}㎡ · 合計 {n2(sum.total||0)}㎡</span>
+                        {unitTypes.length>1&&<button onClick={e=>{e.stopPropagation();delUT(ut.id);}} style={{background:"rgba(127,29,29,0.2)",border:"1px solid rgba(248,113,113,0.2)",color:C.red,borderRadius:6,padding:"2px 8px",cursor:"pointer",fontSize:10}}>刪除</button>}
+                        <span style={{color:C.faint,fontSize:10}}>{isExp?"▲":"▼"}</span>
+                      </div>
+                      {isExp&&(
+                        <div style={{padding:"12px 14px",borderTop:"1px solid rgba(56,189,248,0.08)"}} className="animate-fade-in">
+                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                            <thead><tr style={{color:C.dim}}><th style={{textAlign:"left",padding:"4px 6px",fontWeight:400}}>空間</th><th style={{textAlign:"center",fontWeight:400,padding:"4px 6px"}}>類別</th><th style={{textAlign:"right",fontWeight:400,padding:"4px 6px"}}>面積(㎡)</th><th style={{width:40}}></th></tr></thead>
+                            <tbody>
+                              {ut.spaces.map(sp=>(
+                                <tr key={sp.id} style={{borderTop:"1px solid rgba(56,189,248,0.04)"}}>
+                                  <td style={{padding:"5px 6px"}}><input value={sp.name} onChange={e=>upSp(ut.id,sp.id,"name",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11}}/></td>
+                                  <td style={{padding:"5px 6px"}}><select value={sp.cat} onChange={e=>upSp(ut.id,sp.id,"cat",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11,width:"auto"}}>
+                                    <option value="res">居室</option><option value="bath">附屬</option><option value="bal">陽台</option>
+                                  </select></td>
+                                  <td style={{padding:"5px 6px"}}><input type="number" step="0.01" value={sp.area} onChange={e=>upSp(ut.id,sp.id,"area",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11,textAlign:"right"}}/></td>
+                                  <td style={{padding:"5px 6px",textAlign:"center"}}><button onClick={()=>delSp(ut.id,sp.id)} style={{background:"transparent",border:"none",color:C.dim,cursor:"pointer",fontSize:13}}>✕</button></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          <button onClick={()=>addSp(ut.id)} style={{marginTop:8,background:"rgba(52,211,153,0.06)",border:"1px solid rgba(52,211,153,0.15)",color:C.green,borderRadius:7,padding:"4px 12px",cursor:"pointer",fontSize:10}}>＋ 新增空間</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* MEP Template */}
+            <Card>
+              {SH("⚡","機電模板",C.teal)}
+              <div style={{padding:"14px 16px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+                  <label style={{display:"flex",alignItems:"center",gap:6,fontSize:11,color:C.muted,cursor:"pointer"}}>
+                    <input type="checkbox" checked={useMepTemplate} onChange={e=>setUseMepTemplate(e.target.checked)}/>自動套用機電模板至各樓層
+                  </label>
+                  <span style={{fontSize:10,color:C.dim}}>合計 {n2(getMepFromItems(mepTemplate))}㎡</span>
+                </div>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                  <thead><tr style={{color:C.dim}}><th style={{textAlign:"left",padding:"4px 6px",fontWeight:400}}>項目</th><th style={{textAlign:"right",padding:"4px 6px",fontWeight:400}}>面積(㎡)</th><th style={{width:40}}></th></tr></thead>
+                  <tbody>
+                    {mepTemplate.map(it=>(
+                      <tr key={it.id} style={{borderTop:"1px solid rgba(56,189,248,0.04)"}}>
+                        <td style={{padding:"4px 6px"}}><input value={it.name} onChange={e=>upMepItem(it.id,"name",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11}}/></td>
+                        <td style={{padding:"4px 6px"}}><input type="number" step="0.01" value={it.area} onChange={e=>upMepItem(it.id,"area",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11,textAlign:"right"}}/></td>
+                        <td style={{padding:"4px 6px",textAlign:"center"}}><button onClick={()=>delMepItem(it.id)} style={{background:"transparent",border:"none",color:C.dim,cursor:"pointer",fontSize:13}}>✕</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button onClick={addMepItem} style={{marginTop:8,background:"rgba(20,184,166,0.06)",border:"1px solid rgba(20,184,166,0.15)",color:C.teal,borderRadius:7,padding:"4px 12px",cursor:"pointer",fontSize:10}}>＋ 新增項目</button>
+              </div>
+            </Card>
+
+            {/* Batch Settings */}
+            <Card>
+              {SH("📋","批次設定",C.orange)}
+              <div style={{padding:"14px 16px"}}>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center",marginBottom:10}}>
+                  <button onClick={()=>setShowBatch(v=>!v)} style={{background:"rgba(251,146,60,0.08)",border:"1px solid rgba(251,146,60,0.2)",color:C.orange,borderRadius:8,padding:"5px 14px",cursor:"pointer",fontSize:11}}>{showBatch?"收合批次面板":"展開批次面板"}</button>
+                  <span style={{fontSize:10,color:C.dim}}>已選 {batchSel.size} 層</span>
+                </div>
+                {showBatch&&(
+                  <div className="animate-fade-in">
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+                      <button onClick={selectAllStd} style={{background:"rgba(30,45,64,0.5)",border:"1px solid "+C.border,color:C.muted,borderRadius:7,padding:"4px 10px",cursor:"pointer",fontSize:10}}>全選標準層</button>
+                      <button onClick={clearBatchSel} style={{background:"rgba(30,45,64,0.5)",border:"1px solid "+C.border,color:C.muted,borderRadius:7,padding:"4px 10px",cursor:"pointer",fontSize:10}}>清除選取</button>
+                      <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                        <input type="number" value={batchRangeFrom} onChange={e=>setBatchRangeFrom(e.target.value)} placeholder="從" style={{...INP,width:55,padding:"4px 7px",fontSize:11,textAlign:"center"}}/>
+                        <span style={{color:C.dim,fontSize:10}}>~</span>
+                        <input type="number" value={batchRangeTo} onChange={e=>setBatchRangeTo(e.target.value)} placeholder="至" style={{...INP,width:55,padding:"4px 7px",fontSize:11,textAlign:"center"}}/>
+                        <span style={{color:C.dim,fontSize:10}}>層</span>
+                        <button onClick={selectRange} style={{background:"rgba(30,45,64,0.5)",border:"1px solid "+C.border,color:C.muted,borderRadius:7,padding:"4px 10px",cursor:"pointer",fontSize:10}}>選取範圍</button>
+                      </div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(auto-fill,minmax(130px,1fr))",gap:8,marginBottom:10}}>
+                      {unitTypes.map(ut=>(
+                        <div key={ut.id}><div style={{fontSize:10,color:C.dim,marginBottom:4}}>{ut.name}戶數</div>
+                          <input type="number" min={0} value={batchTpl["ut_"+ut.id]||0} onChange={e=>setBatchTpl(p=>({...p,["ut_"+ut.id]:parseInt(e.target.value)||0}))} style={{...INP,fontSize:11}}/>
+                        </div>
+                      ))}
+                      <div><div style={{fontSize:10,color:C.dim,marginBottom:4}}>共用梯廳(㎡)</div><input type="number" step="0.01" value={batchTpl.corr||""} onChange={e=>setBatchTpl(p=>({...p,corr:e.target.value}))} placeholder="—" style={{...INP,fontSize:11}}/></div>
+                      <div><div style={{fontSize:10,color:C.dim,marginBottom:4}}>樓高(M)</div><input type="number" step="0.1" value={batchTpl.fh||""} onChange={e=>setBatchTpl(p=>({...p,fh:e.target.value}))} placeholder="—" style={{...INP,fontSize:11}}/></div>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <button onClick={applyBatch} style={{background:"rgba(251,146,60,0.1)",border:"1px solid rgba(251,146,60,0.2)",color:C.orange,borderRadius:8,padding:"6px 18px",cursor:"pointer",fontSize:11,fontWeight:600}}>套用至選取樓層</button>
+                      {batchMsg&&<span style={{fontSize:11,color:C.green}}>{batchMsg}</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Floor Mix Table */}
+            <Card>
+              {SH("🏢","樓層配置",C.cyan)}
+              <div style={{padding:"0 0 14px"}}>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:isMobile?500:600}}>
+                    <thead style={{position:"sticky",top:0,zIndex:1}}>
+                      <tr style={{background:"rgba(6,11,20,0.9)"}}>
+                        <th style={{padding:"8px 12px",textAlign:"left",color:C.dim,fontWeight:500,width:50}}>層</th>
+                        <th style={{padding:"8px 6px",textAlign:"center",color:C.dim,fontWeight:500,width:36}}>特殊</th>
+                        {unitTypes.map(ut=><th key={ut.id} style={{padding:"8px 6px",textAlign:"center",color:C.cyan,fontWeight:500,minWidth:60}}>{ut.name}</th>)}
+                        <th style={{padding:"8px 6px",textAlign:"right",color:C.green,fontWeight:500,minWidth:70}}>梯廳(㎡)</th>
+                        <th style={{padding:"8px 6px",textAlign:"right",color:C.purple,fontWeight:500,minWidth:60}}>層高(M)</th>
+                        <th style={{padding:"8px 6px",textAlign:"right",color:C.teal,fontWeight:500,minWidth:70}}>容積(㎡)</th>
+                        <th style={{padding:"8px 4px",width:28}}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {floorMix.map((f,i)=>{
+                        const fc=floorCalcs[i]||{};
+                        const fhBad=fhChecks[i]&&!fhChecks[i].ok;
+                        const isSel=batchSel.has(f.id);
+                        return (
+                          <tr key={f.id} onClick={()=>toggleBatchSel(f.id)} style={{borderTop:"1px solid rgba(56,189,248,0.04)",cursor:"pointer",background:isSel?"rgba(56,189,248,0.05)":f.isSpec?"rgba(251,191,36,0.03)":"transparent",transition:"background 0.15s"}}>
+                            <td style={{padding:"5px 12px"}}>
+                              <span style={{color:f.isSpec?C.yellow:C.muted,fontFamily:"'JetBrains Mono',monospace",fontWeight:f.isSpec?600:400,fontSize:11}}>{f.label}</span>
+                            </td>
+                            <td style={{padding:"5px 6px",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+                              <input type="checkbox" checked={f.isSpec} onChange={()=>togSpec(f.id)} style={{accentColor:C.yellow}}/>
+                            </td>
+                            {unitTypes.map(ut=>(
+                              <td key={ut.id} style={{padding:"4px 4px"}} onClick={e=>e.stopPropagation()}>
+                                <input type="number" min={0} value={f.mix[ut.id]||0} onChange={e=>upFMMix(f.id,ut.id,e.target.value)} style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"center",color:pf(f.mix[ut.id])>0?C.cyan:C.faint}} disabled={f.isSpec}/>
+                              </td>
+                            ))}
+                            <td style={{padding:"4px 4px"}} onClick={e=>e.stopPropagation()}>
+                              <input type="number" step="0.01" value={f.corr} onChange={e=>upFM(f.id,"corr",e.target.value)} placeholder="—" style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"right",color:C.green}}/>
+                            </td>
+                            <td style={{padding:"4px 4px"}} onClick={e=>e.stopPropagation()}>
+                              <input type="number" step="0.1" value={f.fh} onChange={e=>upFM(f.id,"fh",e.target.value)} placeholder={gfh} style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"right",color:fhBad?C.red:C.purple}}/>
+                            </td>
+                            <td style={{padding:"5px 6px",textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:fc.far>0?C.cyan:C.faint,fontWeight:fc.far>0?600:400,fontSize:10}}>{fc.far>0?n2(fc.far):"—"}</td>
+                            <td style={{padding:"4px",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+                              <button onClick={()=>copyDown(f.id)} title="往下複製" style={{background:"transparent",border:"none",color:C.dim,cursor:"pointer",fontSize:11,padding:2}}>↓</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{borderTop:"2px solid rgba(56,189,248,0.15)",background:"rgba(6,11,20,0.8)"}}>
+                        <td colSpan={2+unitTypes.length} style={{padding:"8px 12px",color:C.dim,fontSize:11}}>合計</td>
+                        <td style={{padding:"8px 6px",textAlign:"right",color:C.green,fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:11}}>{n2(sumCorrExempt)}+{n2(sumCorrCounted)}</td>
+                        <td style={{padding:"8px 6px",textAlign:"right",color:C.purple,fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:11}}>H {n1(totalH)}M</td>
+                        <td style={{padding:"8px 6px",textAlign:"right",color:C.cyan,fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:12}}>{n2(aboveFAR)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </Card>
+
+            {/* Basement */}
+            {bsData.length>0&&(
+              <Card>
+                {SH("🔽","地下室",C.purple)}
+                <div style={{padding:"0 0 14px",overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:400}}>
+                    <thead><tr style={{background:"rgba(6,11,20,0.9)"}}>
+                      <th style={{padding:"8px 12px",textAlign:"left",color:C.dim,fontWeight:500,width:50}}>層</th>
+                      <th style={{padding:"8px 6px",textAlign:"right",color:C.purple,fontWeight:500,minWidth:80}}>停車(輛)</th>
+                      <th style={{padding:"8px 6px",textAlign:"right",color:C.teal,fontWeight:500,minWidth:80}}>機電(㎡)</th>
+                      <th style={{padding:"8px 6px",textAlign:"right",color:C.orange,fontWeight:500,minWidth:80}}>計容(㎡)</th>
+                      <th style={{padding:"8px 6px",textAlign:"right",color:C.dim,fontWeight:500,minWidth:70}}>層高(M)</th>
+                    </tr></thead>
+                    <tbody>
+                      {bsData.map(f=>{
+                        const bc=bsCalcs.find(c=>c.id===f.id)||{};
+                        return (
+                          <tr key={f.id} style={{borderTop:"1px solid rgba(129,140,248,0.06)"}}>
+                            <td style={{padding:"5px 12px",color:C.purple,fontFamily:"'JetBrains Mono',monospace",fontWeight:600,fontSize:11}}>{f.label}</td>
+                            <td style={{padding:"4px 6px"}}><input type="number" min={0} value={f.pk} onChange={e=>upBs(f.id,"pk",e.target.value)} placeholder="—" style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"right",color:C.purple}}/></td>
+                            <td style={{padding:"4px 6px"}}><input type="number" step="0.01" value={f.mep} onChange={e=>upBs(f.id,"mep",e.target.value)} placeholder="—" style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"right",color:C.teal}}/></td>
+                            <td style={{padding:"5px 6px",textAlign:"right",fontFamily:"'JetBrains Mono',monospace",color:bc.oth>0?C.orange:C.faint,fontSize:11}}>{bc.oth>0?n2(bc.oth):"—"}</td>
+                            <td style={{padding:"4px 6px"}}><input type="number" step="0.1" value={f.fh} onChange={e=>upBs(f.id,"fh",e.target.value)} placeholder={bsfh} style={{...INP,padding:"4px 6px",fontSize:11,textAlign:"right",color:C.dim}}/></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{borderTop:"2px solid rgba(129,140,248,0.15)",background:"rgba(6,11,20,0.8)"}}>
+                        <td colSpan={2} style={{padding:"8px 12px",color:C.dim,fontSize:11}}>合計</td>
+                        <td style={{padding:"8px 6px",textAlign:"right",color:C.teal,fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:11}}>{n2(bsCalcs.reduce((s,f)=>s+f.mep,0))}</td>
+                        <td style={{padding:"8px 6px",textAlign:"right",color:C.orange,fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:12}}>{n2(bsFARContrib)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </Card>
+            )}
+
+            {/* Roof Structures */}
+            {rfCount>0&&(
+              <Card>
+                {SH("🏗","屋突詳細",C.yellow)}
+                <div style={{padding:"14px 16px",display:"flex",flexDirection:"column",gap:16}}>
+                  {rfFloors.slice(0,rfCount).map(rf=>{
+                    const rc=rfCalcs.find(r=>r.id===rf.id)||{};
+                    return (
+                      <div key={rf.id} style={{border:"1px solid rgba(251,191,36,0.12)",borderRadius:10,overflow:"hidden"}}>
+                        <div style={{padding:"9px 14px",background:"rgba(251,191,36,0.05)",display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{color:C.yellow,fontWeight:700,fontSize:12}}>{rf.label}</span>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{fontSize:10,color:C.dim}}>層高</span>
+                            <input type="number" step="0.1" value={rf.fh} onChange={e=>upRf(rf.id,"fh",e.target.value)} style={{...INP,width:70,padding:"3px 8px",fontSize:11,textAlign:"right",color:C.yellow}}/>
+                            <span style={{fontSize:10,color:C.dim}}>M</span>
+                          </div>
+                          <span style={{marginLeft:"auto",fontSize:11,color:C.yellow,fontFamily:"'JetBrains Mono',monospace",fontWeight:600}}>合計 {n2(rc.total||0)}㎡</span>
+                          {rc.total>rfMaxArea&&<span style={{fontSize:10,color:C.red,background:"rgba(127,29,29,0.2)",padding:"1px 7px",borderRadius:5}}>超限</span>}
+                        </div>
+                        <div style={{padding:"10px 14px"}}>
+                          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                            <thead><tr style={{color:C.dim}}><th style={{textAlign:"left",fontWeight:400,padding:"3px 4px"}}>項目</th><th style={{textAlign:"right",fontWeight:400,padding:"3px 4px"}}>面積(㎡)</th><th style={{width:30}}></th></tr></thead>
+                            <tbody>
+                              {rf.items.map(it=>(
+                                <tr key={it.id} style={{borderTop:"1px solid rgba(251,191,36,0.05)"}}>
+                                  <td style={{padding:"4px 4px"}}><input value={it.name} onChange={e=>upRfItem(rf.id,it.id,"name",e.target.value)} style={{...INP,padding:"4px 8px",fontSize:11}}/></td>
+                                  <td style={{padding:"4px 4px"}}><input type="number" step="0.01" value={it.area} onChange={e=>upRfItem(rf.id,it.id,"area",e.target.value)} placeholder="—" style={{...INP,padding:"4px 8px",fontSize:11,textAlign:"right",color:C.yellow}}/></td>
+                                  <td style={{padding:"4px",textAlign:"center"}}><button onClick={()=>delRfItem(rf.id,it.id)} style={{background:"transparent",border:"none",color:C.dim,cursor:"pointer",fontSize:12}}>✕</button></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          <button onClick={()=>addRfItem(rf.id)} style={{marginTop:8,background:"rgba(251,191,36,0.06)",border:"1px solid rgba(251,191,36,0.15)",color:C.yellow,borderRadius:7,padding:"4px 12px",cursor:"pointer",fontSize:10}}>＋ 新增項目</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div style={{padding:"10px 14px",background:"rgba(30,45,64,0.3)",borderRadius:8,border:"1px solid rgba(251,191,36,0.08)",display:"flex",gap:20,flexWrap:"wrap"}}>
+                    <div><div style={{fontSize:10,color:C.dim,marginBottom:3}}>屋突上限 (12.5%建面)</div><div style={{color:C.yellow,fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700}}>{n2(rfMaxArea)}㎡</div></div>
+                    <div><div style={{fontSize:10,color:C.dim,marginBottom:3}}>屋突合計</div><div style={{color:rfTotal>rfMaxArea?C.red:C.yellow,fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700}}>{n2(rfTotal)}㎡</div></div>
+                    <div><div style={{fontSize:10,color:C.dim,marginBottom:3}}>剩餘額度</div><div style={{color:rfMaxArea-rfTotal>0?C.green:C.red,fontFamily:"'JetBrains Mono',monospace",fontSize:13,fontWeight:700}}>{n2(rfMaxArea-rfTotal)}㎡</div></div>
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         )}
 

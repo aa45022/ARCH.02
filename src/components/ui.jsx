@@ -96,24 +96,27 @@ export function RL({ label, val, unit = "㎡", color, sub, bold }) {
   );
 }
 
-/** 區段標題 */
-export function SectionHeader({ icon, label, color }) {
+/** 區段標題 — 帶色彩左邊線 */
+export function SectionHeader({ icon, label, color, sub }) {
+  const c = color || colors.cyan;
   return (
     <div style={{
-      background: "rgba(15, 23, 42, 0.4)",
+      background: `linear-gradient(90deg, ${c}12 0%, rgba(15,23,42,0.4) 100%)`,
       backdropFilter: "blur(10px)",
-      padding: "10px 16px",
+      padding: "11px 16px",
       fontSize: 12,
-      color: color || colors.cyan,
+      color: c,
       fontWeight: 700,
       borderBottom: "1px solid " + colors.border2,
+      borderLeft: `3px solid ${c}`,
       display: "flex",
       alignItems: "center",
       gap: 8,
       letterSpacing: 0.5,
     }}>
-      <span>{icon}</span>
+      <span style={{ fontSize: 14 }}>{icon}</span>
       <span>{label}</span>
+      {sub && <span style={{ fontSize: 10, color: colors.dim, fontWeight: 400, marginLeft: 4 }}>{sub}</span>}
     </div>
   );
 }
@@ -121,8 +124,29 @@ export function SectionHeader({ icon, label, color }) {
 /** 玻璃卡片 */
 export function Card({ children, style, hover = false }) {
   return (
-    <div style={{ ...glass.card, ...(hover ? glass.cardHover : {}), ...style }}>
+    <div className="glass-card" style={{ ...glass.card, ...(hover ? glass.cardHover : {}), ...style }}>
       {children}
+    </div>
+  );
+}
+
+/** 統計指標卡 */
+export function StatCard({ label, value, unit = "", color, sub, warn }) {
+  const c = warn ? colors.red : (color || colors.cyan);
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, ${c}08 0%, rgba(15,23,42,0.4) 100%)`,
+      border: `1px solid ${c}22`,
+      borderRadius: 12,
+      padding: "12px 16px",
+      minWidth: 100,
+    }}>
+      <div style={{ fontSize: 10, color: colors.dim, marginBottom: 6, letterSpacing: 0.5 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: c, fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>
+        {value}
+        {unit && <span style={{ fontSize: 11, fontWeight: 500, marginLeft: 3 }}>{unit}</span>}
+      </div>
+      {sub && <div style={{ fontSize: 10, color: colors.dim, marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
