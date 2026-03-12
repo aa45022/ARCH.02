@@ -1,64 +1,69 @@
 // ══════════════════════════════════════════════════════════════════
-// 設計系統 — 建面 v8.1 · Linear-inspired Professional Dark Theme
+// 設計系統 — 建面 v9.0 · Linear/Vercel-inspired · Light + Dark
+// CSS variable references for JS inline styles
 // ══════════════════════════════════════════════════════════════════
 
+// These return CSS var() references so inline styles can use the design tokens
 export const colors = {
-  // 背景層級
-  bg:      "#080d18",
-  bg2:     "#0c1424",
-  bg3:     "#101c30",
-  bg4:     "#14233c",
-  surface: "#0d1829",
+  bg:          "var(--bg)",
+  bgSecondary: "var(--bg-secondary)",
+  surface:     "var(--surface)",
+  surfaceHover:"var(--surface-hover)",
+  border:      "var(--border)",
+  borderSubtle:"var(--border-subtle)",
+  text:        "var(--text-primary)",
+  muted:       "var(--text-secondary)",
+  dim:         "var(--text-tertiary)",
+  faint:       "var(--text-quaternary)",
+  accent:      "var(--accent)",
+  accentHover: "var(--accent-hover)",
+  accentSubtle:"var(--accent-subtle)",
+  inputBg:     "var(--input-bg)",
+  inputBorder: "var(--input-border)",
+  focusBorder: "var(--input-focus-border)",
 
-  // 邊框
-  border:  "rgba(255,255,255,0.06)",
-  border2: "rgba(255,255,255,0.04)",
-  border3: "rgba(59,130,246,0.2)",
+  // Functional
+  success: "var(--color-success)",
+  warning: "var(--color-warning)",
+  error:   "var(--color-error)",
+  info:    "var(--color-info)",
 
-  // 主要強調 — 單一冷藍（Professional）
-  cyan:    "#60a5fa",    // 主強調（改為藍色系）
-  blue:    "#3b82f6",    // 深藍
-  purple:  "#a78bfa",
-  green:   "#34d399",
-  yellow:  "#fbbf24",
-  red:     "#f87171",
-  teal:    "#2dd4bf",
-  lav:     "#c4b5fd",
-  orange:  "#fb923c",
-
-  // 文字
-  text:    "#f1f5f9",
-  muted:   "#94a3b8",
-  dim:     "#64748b",
-  faint:   "#2d3f57",
+  // Semantic aliases used in calculations
+  cyan:    "var(--text-primary)",
+  blue:    "var(--color-info)",
+  purple:  "#8B5CF6",
+  green:   "var(--color-success)",
+  yellow:  "var(--color-warning)",
+  red:     "var(--color-error)",
+  teal:    "#14B8A6",
+  lav:     "#A78BFA",
+  orange:  "#F97316",
 };
 
 export const glass = {
   card: {
-    background: "rgba(13, 22, 40, 0.7)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    border: `1px solid rgba(255,255,255,0.06)`,
-    borderRadius: 14,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: 6,
     overflow: "hidden",
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
   },
   cardHover: {
-    border: `1px solid rgba(59,130,246,0.2)`,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+    borderColor: "var(--input-focus-border)",
+    boxShadow: "var(--shadow-md)",
   },
   input: {
-    background: "rgba(59,130,246,0.04)",
-    border: "1px solid rgba(59,130,246,0.15)",
-    color: colors.text,
-    padding: "8px 12px",
-    borderRadius: 9,
+    background: "var(--input-bg)",
+    border: "1px solid var(--input-border)",
+    color: "var(--text-primary)",
+    padding: "7px 10px",
+    borderRadius: 4,
     fontSize: 13,
     width: "100%",
     outline: "none",
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "var(--font-sans)",
     boxSizing: "border-box",
-    transition: "border-color 0.2s ease",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
   },
 };
 
@@ -67,23 +72,23 @@ export const spacing = {
 };
 
 export const fontSize = {
-  xs: 10, sm: 11, md: 13, lg: 15, xl: 18, xxl: 24,
+  xs: 11, sm: 12, md: 13, lg: 14, xl: 16, xxl: 20, xxxl: 24,
 };
 
 export const animation = {
-  fast: "0.15s ease",
-  normal: "0.25s ease",
-  slow: "0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+  fast: "0.12s ease",
+  normal: "0.2s ease",
+  slow: "0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 };
 
 export const alertStyles = {
-  error: { bg: "rgba(127,29,29,0.25)", border: "rgba(248,113,113,0.2)", icon: "✗", color: colors.red },
-  warn:  { bg: "rgba(120,53,15,0.25)", border: "rgba(251,191,36,0.2)", icon: "⚠", color: colors.yellow },
-  info:  { bg: "rgba(22,78,99,0.25)", border: "rgba(45,212,191,0.2)", icon: "ℹ", color: colors.teal },
+  error: { bg: "var(--error-bg)", border: "var(--error-border)", icon: "!", color: "var(--color-error)" },
+  warn:  { bg: "var(--warning-bg)", border: "var(--warning-border)", icon: "!", color: "var(--color-warning)" },
+  info:  { bg: "var(--info-bg)", border: "var(--info-border)", icon: "i", color: "var(--color-info)" },
 };
 
 export const priorityColors = {
-  "高": colors.red,
-  "中": colors.yellow,
-  "低": colors.green,
+  "高": "var(--color-error)",
+  "中": "var(--color-warning)",
+  "低": "var(--color-success)",
 };
