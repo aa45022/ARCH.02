@@ -1,0 +1,162 @@
+/* ══════════════════════════════════════════════════════════════════
+   全域樣式 — 現代化建築法規檢討系統 v8.1
+   ══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #060b14;
+  color: #f1f5f9;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.3); }
+
+/* Focus ring */
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1) !important;
+}
+
+/* Select styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px !important;
+}
+
+/* Input number arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: #38bdf8;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Button base */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button:hover { filter: brightness(1.2); }
+button:active { transform: scale(0.97); }
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to   { opacity: 1; max-height: 2000px; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(56,189,248,0.15); }
+  50%       { box-shadow: 0 0 20px rgba(56,189,248,0.35); }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+.animate-pulse   { animation: pulse 2s ease-in-out infinite; }
+
+/* Tab content transition */
+.tab-content { animation: fadeIn 0.25s ease; }
+
+/* Glass card hover */
+.glass-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.glass-card:hover {
+  border-color: rgba(56, 189, 248, 0.14) !important;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Progress bar */
+.progress-bar { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* Safe area iOS */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Responsive table */
+.responsive-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tooltip */
+[data-tooltip] { position: relative; }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 18, 32, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #f1f5f9;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* Tab button active glow */
+.tab-active-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Stat card number shimmer on hover */
+.stat-card:hover .stat-value {
+  filter: brightness(1.2);
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.15), transparent);
+  margin: 8px 0;
+}
+
+/* Table row hover */
+tr.hoverable:hover {
+  background: rgba(56,189,248,0.04) !important;
+}
